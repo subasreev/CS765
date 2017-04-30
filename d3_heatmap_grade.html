@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <style>
+      rect.bordered {
+        stroke: #E6E6E6;
+        stroke-width:2px;   
+      }
+
+      text.mono {
+        font-size: 9pt;
+        font-family: Consolas, courier;
+        fill: #aaa;
+      }
+
+      text.axis-workweek {
+        fill: #000;
+      }
+
+      text.axis-worktime {
+        fill: #000;
+      }
+    </style>
+    <script src="http://d3js.org/d3.v3.js"></script>
+  </head>
+  <body>
+    <div id="chart"></div>
+    <div id="dataset-picker">
+    </div>
+    <script type="text/javascript">
+	var width = 600;
+var height = 800;
+
+var txtWidth = 150;
+var visWidth = width - txtWidth;
+// so we don't accidentally write things off of the canvas, give us a little breathing room
+var margins = {top: 20, right: 20, bottom: 40, left: 20};
+
+// modifying these variables should neatly update everything else
+var width = 600;
+var height = 800;
+var txtWidth = 150;
+var visWidth = width - txtWidth;
+
+var svg = d3.select('body').append('svg')
+    .attr('width', width + margins.left + margins.right)
+    .attr('height', height + margins.top + margins.bottom)
+    .append('g')
+        .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
+     d3.json("../RealisticData/20x10.json", function(error, data) {
+    		updateVis(data);
+	});
+     var x = d3.scale.ordinal()
+    .rangeRoundBands([0, visWidth], 0.2);
+
+	// scale for determining name positions
+    var y = d3.scale.ordinal()
+	    .rangeRoundBands([0, height], 0.5);
+
+function updateVis(data) {	 
+    x.domain(d3.range(0, 80));
+    y.domain(data.assignments.map(function(d) { return d.name; })); 
+      var possible_colvalues = [0, 10, 20, 30, 40, 50, 60, 70]
+      var gridSize = Math.floor(width / possible_colvalues.length);
+      var dayLabels = svg.selectAll(".dayLabel")
+          .data(data.assignments)
+          .enter()
+            .append("g")
+            .attr("class", "dayLabel")
+	    .attr('transform', function(d) { 
+            return 'translate(0,' + y(d.name) + ')'
+            })
+	dayLabels.append('text')
+        .text(function(d) { return d.name; });
+
+      var timeLabels = svg.selectAll(".timeLabel")
+          .data(possible_colvalues)
+          .enter().append("text")
+            .text(function(d) { return d; })
+            .attr("x", function(d, i) {return i * gridSize + 50; })
+            .attr("y", 0)
+            .style("text-anchor", "middle")
+            .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+            .attr("class", "timeLabel");
+     
+     var studentGrps = dayLabels.append('g')
+        .attr('class', 'assignRow')
+        .attr('transform', 'translate(' + txtWidth + ',0)');
+
+     var rows = studentGrps.selectAll(".row")
+              .data(function(d,i) {
+		//console.log(i);
+		var assign_grade_freq = new Array(possible_colvalues.length);
+		assign_grade_freq.fill(0);
+		var grades = [].concat(data.students.map(function (student) { return student.grades[i].score;}));
+		//console.log(grades);
+		for(var j in grades){
+		 var indx = Math.floor(grades[j]/10);
+		 //console.log(indx);
+		 assign_grade_freq[indx] = assign_grade_freq[indx] + 1;
+		}
+		//console.log(assign_grade_freq);
+		return assign_grade_freq; 
+		})
+	      .enter()
+	      .append('g')
+              .attr('class', 'row')
+	      .attr("x", function(d, i) {return x.rangeBand();})
+              .attr("y", function(d, i){return y(this.parentNode.parentNode.__data__.name);})
+              .style("text-anchor", "middle")
+              .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+              .attr("y", 0)
+             
+	rows.append('text')
+	.attr("x", function(d, i) {return i*gridSize - 140})
+        .attr("y", 0)
+	.attr("transform", "translate(" + gridSize / 2 + ", 6)")
+        .text(function(d) { return d });
+}     
+    </script>
+  </body>
+</html>
