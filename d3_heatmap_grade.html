@@ -63,6 +63,9 @@ function updateVis(data) {
     y.domain(data.assignments.map(function(d) { return d.name; })); 
       var possible_colvalues = [0, 10, 20, 30, 40, 50, 60, 70]
       var gridSize = Math.floor(width / possible_colvalues.length);
+      var buckets = 9,
+          colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
+
       var dayLabels = svg.selectAll(".dayLabel")
           .data(data.assignments)
           .enter()
@@ -78,9 +81,9 @@ function updateVis(data) {
           .data(possible_colvalues)
           .enter().append("text")
             .text(function(d) { return d; })
-            .attr("x", function(d, i) {return i * gridSize + 50; })
+            .attr("x", function(d, i) {return i * (gridSize-37) + 50; })
             .attr("y", 0)
-            .style("text-anchor", "middle")
+            //.style("text-anchor", "middle")
             .attr("transform", "translate(" + gridSize / 2 + ", -6)")
             .attr("class", "timeLabel");
      
@@ -112,11 +115,29 @@ function updateVis(data) {
               .attr("transform", "translate(" + gridSize / 2 + ", -6)")
               .attr("y", 0)
              
-	rows.append('text')
-	.attr("x", function(d, i) {return i*gridSize - 140})
-        .attr("y", 0)
-	.attr("transform", "translate(" + gridSize / 2 + ", 6)")
-        .text(function(d) { return d });
+	var colorScale = d3.scale.quantile()
+              .domain([0, buckets - 1, 20])
+              .range(colors);
+         rows.append("title");
+
+          rows.append("rect")
+              .attr("x", function(d, i) { return i * (gridSize -37) - 140; })
+              //.attr("y", function(d) { return y(this.parentNode.parentNode.__data__.name);})
+	      .attr("y", 0)
+              .attr("rx", 4)
+              .attr("ry", 4)
+	      .attr("transform", "translate(" + gridSize / 2 + ",-10)")
+              .attr("class", "hour bordered")
+              .attr("width", gridSize/2)
+              .attr("height", gridSize/2)
+              .style("fill", function(d) {return colorScale(d);});
+
+          rows.transition().duration(1000)
+              .style("fill", function(d) { return colorScale(d); });
+
+          rows.select("title").text(function(d) { return d; });
+          
+          //rows.exit().remove();
 }     
     </script>
   </body>
