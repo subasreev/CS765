@@ -26,30 +26,31 @@
   </head>
   <body>
     <div id="chart"></div>
-    <div id="dataset-picker">
-    </div>
     <script type="text/javascript">
 	var width = 600;
-var height = 800;
+	var height = 800;
 
-var txtWidth = 150;
-var visWidth = width - txtWidth;
-// so we don't accidentally write things off of the canvas, give us a little breathing room
-var margins = {top: 20, right: 20, bottom: 40, left: 20};
+	var txtWidth = 150;
+	var visWidth = width - txtWidth;
+	// so we don't accidentally write things off of the canvas, give us a little breathing room
+	var margins = {top: 20, right: 20, bottom: 40, left: 20};
 
-// modifying these variables should neatly update everything else
-var width = 600;
-var height = 800;
-var txtWidth = 150;
-var visWidth = width - txtWidth;
+	// modifying these variables should neatly update everything else
+	var width = 600;
+	var height = 800;
+	var txtWidth = 150;
+	var visWidth = width - txtWidth;
 
-var svg = d3.select('body').append('svg')
-    .attr('width', width + margins.left + margins.right)
-    .attr('height', height + margins.top + margins.bottom)
-    .append('g')
-        .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
+	var svg = d3.select('body').append('svg')
+	    .attr('width', width + margins.left + margins.right)
+	    .attr('height', height + margins.top + margins.bottom)
+	    .append('g')
+		.attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
+
+     var fields = ["grade", "num_posts"];
+
      d3.json("../RealisticData/20x10.json", function(error, data) {
-    		updateVis(data);
+    		updateVis(data, fields[0]);
 	});
      var x = d3.scale.ordinal()
     .rangeRoundBands([0, visWidth], 0.2);
@@ -58,7 +59,9 @@ var svg = d3.select('body').append('svg')
     var y = d3.scale.ordinal()
 	    .rangeRoundBands([0, height], 0.5);
 
-function updateVis(data) {	 
+    
+
+function updateVis(data, field) {	 
     x.domain(d3.range(0, 80));
     y.domain(data.assignments.map(function(d) { return d.name; })); 
       var possible_colvalues = [0, 10, 20, 30, 40, 50, 60, 70]
@@ -115,8 +118,10 @@ function updateVis(data) {
               .attr("transform", "translate(" + gridSize / 2 + ", -6)")
               .attr("y", 0)
              
+	var upperBound = 15; //d3.selectAll("row").each(function (d, i) { console.log(d); return d; });
+	//console.log(upperBound);
 	var colorScale = d3.scale.quantile()
-              .domain([0, buckets - 1, 20])
+              .domain([0, buckets - 1, upperBound])
               .range(colors);
          rows.append("title");
 
@@ -138,6 +143,20 @@ function updateVis(data) {
           rows.select("title").text(function(d) { return d; });
           
           //rows.exit().remove();
+	var datasetpicker = d3.select('body').selectAll("input")
+        .data(fields)
+	.enter()
+        .append("input")
+        .attr("type", "button")
+        .attr("class", "button")
+	//.attr("float", "left")
+	//.attr("x", 100)
+	//.attr("y", 770)
+	.attr("value", function(d){ return d;})
+        .on("click", function(d) {
+          updateVis(data, d);
+        });
+	
 }     
     </script>
   </body>
