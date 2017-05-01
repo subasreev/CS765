@@ -64,10 +64,26 @@
 function updateVis(data, field) {	 
     x.domain(d3.range(0, 80));
     y.domain(data.assignments.map(function(d) { return d.name; })); 
-      var possible_colvalues = [0, 10, 20, 30, 40, 50, 60, 70]
-      var gridSize = Math.floor(width / possible_colvalues.length);
+      var numBins = 5;
+      if (field == "num_posts")
+	numBins = 5;
+      
+      var gridSize = Math.floor(width / numBins);
       var buckets = 9,
           colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
+      
+      // find the  maximum value of the field
+      var maxFieldVal = d3.max(data.students.map(function(d) { return d3.max(d.grades, function(v){if(field == "grade") return v.score; else if(field == "num_posts") return v.posts.length;}); }));
+      console.log("max " + field +" ="  + maxFieldVal);
+      var binSize = Math.floor(maxFieldVal/numBins);
+      console.log("binsize="+binSize); 	
+
+      if(maxFieldVal/binSize >= numBins)
+	numBins += 1;
+      var possible_colvalues = []
+      for(var i = 0; i<numBins; i++){
+      	possible_colvalues[i] = "< "+((i+1)*binSize);
+      }
 
       var dayLabels = svg.selectAll(".dayLabel")
           .data(data.assignments)
@@ -84,7 +100,7 @@ function updateVis(data, field) {
           .data(possible_colvalues)
           .enter().append("text")
             .text(function(d) { return d; })
-            .attr("x", function(d, i) {return i * (gridSize-37) + 50; })
+            .attr("x", function(d, i) {return i * (gridSize-57) + 20; })
             .attr("y", 0)
             //.style("text-anchor", "middle")
             .attr("transform", "translate(" + gridSize / 2 + ", -6)")
@@ -97,12 +113,14 @@ function updateVis(data, field) {
      var rows = studentGrps.selectAll(".row")
               .data(function(d,i) {
 		//console.log(i);
-		var assign_grade_freq = new Array(possible_colvalues.length);
+		var assign_grade_freq = new Array(numBins);
 		assign_grade_freq.fill(0);
-		var grades = [].concat(data.students.map(function (student) { return student.grades[i].score;}));
+		var grades = [].concat(data.students.map(function (student) { if (field == "grade") return student.grades[i].score; else if (field == "num_posts") return student.grades[i].posts.length;}));
 		//console.log(grades);
 		for(var j in grades){
-		 var indx = Math.floor(grades[j]/10);
+		 var indx = Math.floor(grades[j]/binSize);
+		 if (indx == numBins)
+			indx = numBins - 1;
 		 //console.log(indx);
 		 assign_grade_freq[indx] = assign_grade_freq[indx] + 1;
 		}
@@ -129,7 +147,7 @@ function updateVis(data, field) {
          rows.append("title");
 
           rows.append("rect")
-              .attr("x", function(d, i) { return i * (gridSize -37) - 140; })
+              .attr("x", function(d, i) { return i * (gridSize - 57) - 180; })
               //.attr("y", function(d) { return y(this.parentNode.parentNode.__data__.name);})
 	      .attr("y", 0)
               .attr("rx", 4)
