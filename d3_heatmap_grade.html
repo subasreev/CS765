@@ -118,7 +118,10 @@ function updateVis(data, field) {
               .attr("transform", "translate(" + gridSize / 2 + ", -6)")
               .attr("y", 0)
              
-	var upperBound = 15; //d3.selectAll("row").each(function (d, i) { console.log(d); return d; });
+	//var upperBound = 15; //d3.selectAll("row").each(function (d, i) { console.log(d); return d; });
+	var allFreq = [];
+	svg.selectAll(".row").each(function (d) { allFreq.push(d); });
+	var upperBound = d3.max(allFreq);
 	//console.log(upperBound);
 	var colorScale = d3.scale.quantile()
               .domain([0, buckets - 1, upperBound])
