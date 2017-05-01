@@ -26,6 +26,7 @@
   </head>
   <body>
     <div id="chart"></div>
+    <div id="dataset-picker"></div>
     <script type="text/javascript">
 	var width = 600;
 	var height = 800;
@@ -41,7 +42,7 @@
 	var txtWidth = 150;
 	var visWidth = width - txtWidth;
 
-	var svg = d3.select('body').append('svg')
+	var svg = d3.select('#chart').append('svg')
 	    .attr('width', width + margins.left + margins.right)
 	    .attr('height', height + margins.top + margins.bottom)
 	    .append('g')
@@ -59,7 +60,6 @@
     var y = d3.scale.ordinal()
 	    .rangeRoundBands([0, height], 0.5);
 
-    
 
 function updateVis(data, field) {	 
     x.domain(d3.range(0, 80));
@@ -69,6 +69,7 @@ function updateVis(data, field) {
 	numBins = 5;
       
       var gridSize = Math.floor(width / numBins);
+      var legendElementWidth = 30;
       var buckets = 9,
           colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
       
@@ -100,9 +101,9 @@ function updateVis(data, field) {
           .data(possible_colvalues)
           .enter().append("text")
             .text(function(d) { return d; })
-            .attr("x", function(d, i) {return i * (gridSize-57) + 20; })
+            .attr("x", function(d, i) {return i * (gridSize-57) + 30; })
             .attr("y", 0)
-            //.style("text-anchor", "middle")
+            .style("text-anchor", "right")
             .attr("transform", "translate(" + gridSize / 2 + ", -6)")
             .attr("class", "timeLabel");
      
@@ -126,8 +127,8 @@ function updateVis(data, field) {
 		}
 		//console.log(assign_grade_freq);
 		return assign_grade_freq; 
-		})
-	      .enter()
+		});
+	      rows.enter()
 	      .append('g')
               .attr('class', 'row')
 	      .attr("x", function(d, i) {return x.rangeBand();})
@@ -144,27 +145,29 @@ function updateVis(data, field) {
 	var colorScale = d3.scale.quantile()
               .domain([0, buckets - 1, upperBound])
               .range(colors);
-         rows.append("title");
 
-          rows.append("rect")
-              .attr("x", function(d, i) { return i * (gridSize - 57) - 180; })
+	      rows.append("rect")
+	      //.append("rect")
+              .attr("x", function(d, i) {return i * (gridSize - 57) - 180; })
               //.attr("y", function(d) { return y(this.parentNode.parentNode.__data__.name);})
 	      .attr("y", 0)
               .attr("rx", 4)
               .attr("ry", 4)
 	      .attr("transform", "translate(" + gridSize / 2 + ",-10)")
-              .attr("class", "hour bordered")
+              .attr("class", "card bordered")
               .attr("width", gridSize/2)
-              .attr("height", gridSize/2)
+              .attr("height", gridSize/3)
               .style("fill", function(d) {return colorScale(d);});
+          rows.append("title");
 
           rows.transition().duration(1000)
               .style("fill", function(d) { return colorScale(d); });
 
           rows.select("title").text(function(d) { return d; });
           
-          //rows.exit().remove();
-	var datasetpicker = d3.select('body').selectAll("input")
+          rows.exit().remove();
+
+	var datasetpicker = d3.select('#dataset-picker').selectAll("input")
         .data(fields)
 	.enter()
         .append("input")
@@ -172,11 +175,32 @@ function updateVis(data, field) {
         .attr("class", "button")
 	//.attr("float", "left")
 	//.attr("x", 100)
-	//.attr("y", 770)
+	//.attr("y", height+40)
 	.attr("value", function(d){ return d;})
         .on("click", function(d) {
           updateVis(data, d);
         });
+
+	 var legend = svg.selectAll(".legend")
+              .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+          legend.enter().append("g")
+              .attr("class", "legend");
+
+          legend.append("rect")
+            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("y", height)
+            .attr("width", legendElementWidth+10)
+            .attr("height", legendElementWidth)
+            .style("fill", function(d, i) { return colors[i]; });
+
+          legend.append("text")
+            .attr("class", "mono")
+            .text(function(d) { return "≥ " + Math.round(d); })
+            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("y", height+40);
+
+          legend.exit().remove();
 	
 }     
     </script>
