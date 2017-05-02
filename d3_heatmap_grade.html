@@ -50,7 +50,7 @@
 
      var fields = ["grade_score", "num_posts", "length_posts"];
 
-     d3.json("../RealisticData/20x10.json", function(error, data) {
+     d3.json("../RealisticData/100x15.json", function(error, data) {
     		updateVis(data, fields[0]);
 	});
      var x = d3.scale.ordinal()
@@ -66,6 +66,7 @@ function updateVis(data, field) {
     y.domain(data.assignments.map(function(d) { return d.name; })); 
       var numBins = 5;
       var gridSize = Math.floor(width / numBins);
+      var gridHeight = Math.floor(height / data.assignments.length);
       var legendElementWidth = 30;
       var buckets = 9,
           colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
@@ -92,7 +93,10 @@ function updateVis(data, field) {
       var possible_colvalues = new Array(numBins);
       possible_colvalues.fill(0);
       for(var i = 0; i<numBins; i++){
-      	possible_colvalues[i] = "< "+((i+1)*binSize);
+	if(i == numBins - 1 && i*binSize != maxFieldVal)
+		possible_colvalues[i] = "<= "+maxFieldVal;
+	else
+	      	possible_colvalues[i] = "< "+((i+1)*binSize);
       }
       var dayLabels = svg.selectAll(".dayLabel")
           .data(data.assignments)
@@ -149,12 +153,12 @@ function updateVis(data, field) {
 		//console.log(grades);
 		for(var j in grades){
 		 var indx = Math.floor(grades[j]/binSize);
-		 if (indx == numBins)
+		 if (indx >= numBins)
 			indx = numBins - 1;
 		 //console.log(indx);
 		 assign_grade_freq[indx] = assign_grade_freq[indx] + 1;
 		}
-		//console.log(assign_grade_freq);
+		//console.log(d3.sum(assign_grade_freq));
 		return assign_grade_freq; 
 		});
 
@@ -187,7 +191,7 @@ function updateVis(data, field) {
 	      .attr("transform", "translate(" + gridSize / 2 + ",-10)")
               .attr("class", "card bordered")
               .attr("width", gridSize/2)
-              .attr("height", gridSize/5)
+              .attr("height", gridHeight-5)
               .style("fill", function(d) {return colorScale(d);});
 
           rows.append("title");
