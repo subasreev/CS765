@@ -48,7 +48,7 @@
 	    .append('g')
 		.attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
 
-     var fields = ["grade", "num_posts"];
+     var fields = ["grade_score", "num_posts", "length_posts"];
 
      d3.json("../RealisticData/20x10.json", function(error, data) {
     		updateVis(data, fields[0]);
@@ -65,27 +65,35 @@ function updateVis(data, field) {
     x.domain(d3.range(0, 80));
     y.domain(data.assignments.map(function(d) { return d.name; })); 
       var numBins = 5;
-      if (field == "num_posts")
-	numBins = 5;
-      
       var gridSize = Math.floor(width / numBins);
       var legendElementWidth = 30;
       var buckets = 9,
           colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
       
       // find the  maximum value of the field
-      var maxFieldVal = d3.max(data.students.map(function(d) { return d3.max(d.grades, function(v){if(field == "grade") return v.score; else if(field == "num_posts") return v.posts.length;}); }));
+      var maxFieldVal = d3.max(data.students.map(function(d) { return d3.max(d.grades, function(v){
+	if(field == "grade_score") return v.score; 
+	else if(field == "num_posts") return v.posts.length; 
+	else if(field == "length_posts") {
+		var maxval = 0; 
+		for(var i=0;i<v.posts.length;i++){
+			//console.log(v.posts[i].images);
+			maxval = Math.max(maxval, v.posts[i].length);
+		}
+		return maxval;
+	}}); 
+	}));
       console.log("max " + field +" ="  + maxFieldVal);
       var binSize = Math.floor(maxFieldVal/numBins);
       console.log("binsize="+binSize); 	
 
       if(maxFieldVal/binSize >= numBins)
 	numBins += 1;
-      var possible_colvalues = []
+      var possible_colvalues = new Array(numBins);
+      possible_colvalues.fill(0);
       for(var i = 0; i<numBins; i++){
       	possible_colvalues[i] = "< "+((i+1)*binSize);
       }
-
       var dayLabels = svg.selectAll(".dayLabel")
           .data(data.assignments)
           .enter()
@@ -98,25 +106,46 @@ function updateVis(data, field) {
         .text(function(d) { return d.name; });
 
       var timeLabels = svg.selectAll(".timeLabel")
-          .data(possible_colvalues)
-          .enter().append("text")
-            .text(function(d) { return d; })
-            .attr("x", function(d, i) {return i * (gridSize-57) + 30; })
+          .data(possible_colvalues);
+          timeLabels.enter().append("g")
+            .attr("x", function(d, i) { return i * (gridSize-57) + 30; })
             .attr("y", 0)
-            .style("text-anchor", "right")
             .attr("transform", "translate(" + gridSize / 2 + ", -6)")
             .attr("class", "timeLabel");
-     
-     var studentGrps = dayLabels.append('g')
+		
+          timeLabels.append('text')
+	  .text(function(d) { return d; })
+	  .style("text-anchor", "right")
+	  .attr("x", function(d, i) { return i * (gridSize-57) - 20; })
+          .attr("y", 0)
+          .attr("transform", "translate(" + gridSize / 2 + ", 0)");
+
+	  timeLabels.transition().duration(1000);
+
+          timeLabels.exit().remove();
+	  //console.log(timeLabels);
+
+     var studentGrps = svg.selectAll(".dayLabel").append('g')
         .attr('class', 'assignRow')
         .attr('transform', 'translate(' + txtWidth + ',0)');
 
      var rows = studentGrps.selectAll(".row")
               .data(function(d,i) {
-		//console.log(i);
 		var assign_grade_freq = new Array(numBins);
 		assign_grade_freq.fill(0);
-		var grades = [].concat(data.students.map(function (student) { if (field == "grade") return student.grades[i].score; else if (field == "num_posts") return student.grades[i].posts.length;}));
+		var grades = [].concat(data.students.map(function (student) { 
+			var v = student.grades[i];
+			if (field == "grade_score") return v.score; 
+			else if (field == "num_posts") return v.posts.length; 
+			else if (field == "length_posts") {
+				var values = []; 
+				for(var j=0;j<v.posts.length;j++){
+					values.push(v.posts[j].length);
+				} 
+				return values;
+			}
+	 	}));
+		grades = [].concat.apply([], grades);
 		//console.log(grades);
 		for(var j in grades){
 		 var indx = Math.floor(grades[j]/binSize);
@@ -128,6 +157,7 @@ function updateVis(data, field) {
 		//console.log(assign_grade_freq);
 		return assign_grade_freq; 
 		});
+
 	      rows.enter()
 	      .append('g')
               .attr('class', 'row')
@@ -142,6 +172,7 @@ function updateVis(data, field) {
 	svg.selectAll(".row").each(function (d) { allFreq.push(d); });
 	var upperBound = d3.max(allFreq);
 	//console.log(upperBound);
+
 	var colorScale = d3.scale.quantile()
               .domain([0, buckets - 1, upperBound])
               .range(colors);
@@ -156,8 +187,9 @@ function updateVis(data, field) {
 	      .attr("transform", "translate(" + gridSize / 2 + ",-10)")
               .attr("class", "card bordered")
               .attr("width", gridSize/2)
-              .attr("height", gridSize/3)
+              .attr("height", gridSize/5)
               .style("fill", function(d) {return colorScale(d);});
+
           rows.append("title");
 
           rows.transition().duration(1000)
@@ -167,21 +199,7 @@ function updateVis(data, field) {
           
           rows.exit().remove();
 
-	var datasetpicker = d3.select('#dataset-picker').selectAll("input")
-        .data(fields)
-	.enter()
-        .append("input")
-        .attr("type", "button")
-        .attr("class", "button")
-	//.attr("float", "left")
-	//.attr("x", 100)
-	//.attr("y", height+40)
-	.attr("value", function(d){ return d;})
-        .on("click", function(d) {
-          updateVis(data, d);
-        });
-
-	 var legend = svg.selectAll(".legend")
+	var legend = svg.selectAll(".legend")
               .data([0].concat(colorScale.quantiles()), function(d) { return d; });
 
           legend.enter().append("g")
@@ -201,6 +219,25 @@ function updateVis(data, field) {
             .attr("y", height+40);
 
           legend.exit().remove();
+
+	var datasetpicker = d3.select('#dataset-picker').selectAll("input")
+        .data(fields)
+	.enter()
+        .append("input")
+        .attr("type", "button")
+        .attr("class", "button")
+	//.attr("float", "left")
+	//.attr("x", 100)
+	//.attr("y", height+40)
+	.attr("value", function(d){ return d;})
+        .on("click", function(d) {
+	  timeLabels.remove();
+	  rows.remove();
+	  legend.remove();
+          updateVis(data, d);
+        });
+
+	 
 	
 }     
     </script>
