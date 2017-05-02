@@ -235,9 +235,9 @@ function updateVis(data, field) {
 	//.attr("y", height+40)
 	.attr("value", function(d){ return d;})
         .on("click", function(d) {
-	  timeLabels.remove();
-	  rows.remove();
-	  legend.remove();
+	  svg.selectAll(".timeLabel").remove();
+	  svg.selectAll(".row").remove();
+	  svg.selectAll(".legend").remove();
           updateVis(data, d);
         });
 
