@@ -192,7 +192,7 @@ function updateVis(data, field) {
 	      .attr("transform", "translate(" + gridSize / 2 + ",-10)")
               .attr("class", "card bordered")
               .attr("width", gridSize/2)
-              .attr("height", gridHeight-5)
+              .attr("height", gridHeight)
               .style("fill", function(d) {return colorScale(d);});
 
           rows.append("title");
@@ -241,9 +241,6 @@ function updateVis(data, field) {
 	  svg.selectAll(".legend").remove();
           updateVis(data, d);
         });
-
-	 
-	
 }     
     </script>
   </body>
