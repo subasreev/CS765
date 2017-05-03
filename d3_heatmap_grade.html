@@ -3,6 +3,7 @@
 <html>
   <head>
     <style>
+      
       rect.bordered {
         stroke: #E6E6E6;
         stroke-width:2px;   
@@ -21,14 +22,68 @@
       text.axis-worktime {
         fill: #000;
       }
+      
+      svg {
+  font: 10px sans-serif;
+  padding: 10px;
+}
+
+.axis,
+.frame {
+  shape-rendering: crispEdges;
+}
+
+.axis line {
+  stroke: #ddd;
+}
+
+.axis path {
+  display: none;
+}
+
+.cell text {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.frame {
+  fill: none;
+  stroke: #aaa;
+}
+
+circle {
+  fill-opacity: .7;
+}
+
+circle.hidden {
+  fill: #ccc !important;
+}
+
+.extent {
+  fill: #000;
+  fill-opacity: .125;
+  stroke: #fff;
+}
     </style>
     <script src="http://d3js.org/d3.v3.js"></script>
   </head>
   <body>
     <div id="chart"></div>
     <div id="dataset-picker"></div>
+    <div id="scatterplot"></div>
+    <div id="heatmap"></div>
     <script type="text/javascript">
-	var width = 600;
+	
+
+     var fields = ["grade_score", "num_posts", "length_posts"];
+
+     d3.json("../RealisticData/100x15.json", function(error, data) {
+    		updateVis(data, fields[0]);
+	});
+    
+
+function updateVis(data, field) {
+    var width = 600;
 	var height = 800;
 
 	var txtWidth = 150;
@@ -47,21 +102,14 @@
 	    .attr('height', height + margins.top + margins.bottom)
 	    .append('g')
 		.attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
-
-     var fields = ["grade_score", "num_posts", "length_posts"];
-
-     d3.json("../RealisticData/100x15.json", function(error, data) {
-    		updateVis(data, fields[0]);
-	});
-     var x = d3.scale.ordinal()
+ var x = d3.scale.ordinal()
     .rangeRoundBands([0, visWidth], 0.2);
 
 	// scale for determining name positions
     var y = d3.scale.ordinal()
 	    .rangeRoundBands([0, height], 0.5);
 
-
-function updateVis(data, field) {	 
+	 
     x.domain(d3.range(0, 80));
     y.domain(data.assignments.map(function(d) { return d.name; })); 
       var numBins = 5;
@@ -99,8 +147,9 @@ function updateVis(data, field) {
 	      	possible_colvalues[i] = "< "+((i+1)*binSize);
       }
       var dayLabels = svg.selectAll(".dayLabel")
-          .data(data.assignments)
-          .enter()
+          .data(data.assignments);
+	  
+          dayLabels.enter()
             .append("g")
             .attr("class", "dayLabel")
 	    .attr('transform', function(d) { 
@@ -108,6 +157,7 @@ function updateVis(data, field) {
             })
 	dayLabels.append('text')
         .text(function(d) { return d.name; });
+	dayLabels.exit().remove();
 
       var timeLabels = svg.selectAll(".timeLabel")
           .data(possible_colvalues);
@@ -226,8 +276,9 @@ function updateVis(data, field) {
           legend.exit().remove();
 
 	var datasetpicker = d3.select('#dataset-picker').selectAll("input")
-        .data(fields)
-	.enter()
+        .data(fields);
+
+	datasetpicker.enter()
         .append("input")
         .attr("type", "button")
         .attr("class", "button")
@@ -236,12 +287,227 @@ function updateVis(data, field) {
 	//.attr("y", height+40)
 	.attr("value", function(d){ return d;})
         .on("click", function(d) {
-	  svg.selectAll(".timeLabel").remove();
-	  svg.selectAll(".row").remove();
-	  svg.selectAll(".legend").remove();
+	  //svg.selectAll(".timeLabel").remove();
+	  //svg.selectAll(".row").remove();
+	  //svg.selectAll(".legend").remove();
+	  d3.select("svg").remove();
           updateVis(data, d);
         });
-}     
+	
+	var scatterplot = d3.select('#scatterplot').selectAll("input")
+        .data(["scatterplot matrix"]);
+
+	scatterplot.enter()
+        .append("input")
+        .attr("type", "button")
+        .attr("class", "button")
+	//.attr("float", "left")
+	//.attr("x", 100)
+	//.attr("y", height+40)
+	.attr("value", function(d){ return d;})
+        .on("click", function(d) {
+	  d3.select("svg").remove();
+	  
+	  var clickedButton = this;
+	  d3.selectAll("#scatterplot").each(function() {
+        	var currButton = this;
+        	d3.select(this).transition().duration(900).style("visibility", function() {
+            	return (currButton === clickedButton) ? "visible" : "hidden";
+          });
+          });
+	  d3.selectAll("#dataset-picker").each(function() {
+        	var currButton = this;
+        	d3.select(this).transition().duration(900).style("visibility", function() {
+            	return "hidden";
+          });
+          });
+	  d3.selectAll("#heatmap").each(function() {
+        	var currButton = this;
+        	d3.select(this).transition().duration(900).style("visibility", function() {
+            	return "visible";
+          });
+          });
+          displayScatterplotMatrix();
+        });
+} 
+
+function displayScatterplotMatrix(){
+    d3.select("svg").remove();
+
+    var width = 960,
+    size = 230,
+    padding = 20;
+
+	var x = d3.scale.linear()
+	    .range([padding / 2, size - padding / 2]);
+
+	var y = d3.scale.linear()
+	    .range([size - padding / 2, padding / 2]);
+
+	var xAxis = d3.svg.axis()
+	    .scale(x)
+	    .orient("bottom")
+	    .ticks(6);
+
+	var yAxis = d3.svg.axis()
+	    .scale(y)
+	    .orient("left")
+	    .ticks(6);
+
+	var color = d3.scale.category10();
+
+	d3.csv("output.csv", function(error, data) {
+	  if (error) throw error;
+
+	  var domainByTrait = {},
+	      traits = d3.keys(data[0]).filter(function(d) { return d !== "category"; }),
+	      n = traits.length;
+
+	  traits.forEach(function(trait) {
+	    domainByTrait[trait] = d3.extent(data, function(d) { return +d[trait]; });
+	    console.log(domainByTrait[trait]);
+	  });
+
+	  xAxis.tickSize(size * n);
+	  yAxis.tickSize(-size * n);
+
+	  var brush = d3.svg.brush()
+	      .x(x)
+	      .y(y)
+	      .on("brushstart", brushstart)
+	      .on("brush", brushmove)
+	      .on("brushend", brushend);
+
+	  var svg = d3.select("#chart").append("svg")
+	      .attr("width", size * n + padding)
+	      .attr("height", size * n + padding)
+	    .append("g")
+	      .attr("transform", "translate(" + padding + "," + padding / 2 + ")");
+
+	  svg.selectAll(".x.axis")
+	      .data(traits)
+	    .enter().append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", function(d, i) { return "translate(" + (n - i - 1) * size + ",0)"; })
+	      .each(function(d) { x.domain(domainByTrait[d]); d3.select(this).call(xAxis); });
+
+	  svg.selectAll(".y.axis")
+	      .data(traits)
+	    .enter().append("g")
+	      .attr("class", "y axis")
+	      .attr("transform", function(d, i) { return "translate(0," + i * size + ")"; })
+	      .each(function(d) { y.domain(domainByTrait[d]); d3.select(this).call(yAxis); });
+
+	  var cell = svg.selectAll(".cell")
+	      .data(cross(traits, traits))
+	    .enter().append("g")
+	      .attr("class", "cell")
+	      .attr("transform", function(d) { return "translate(" + (n - d.i - 1) * size + "," + d.j * size + ")"; })
+	      .each(plot);
+
+	  // Titles for the diagonal.
+	  cell.filter(function(d) { return d.i === d.j; }).append("text")
+	      .attr("x", padding)
+	      .attr("y", padding)
+	      .attr("dy", ".71em")
+	      .text(function(d) { return d.x; });
+
+	  cell.call(brush);
+
+	  function plot(p) {
+	    var cell = d3.select(this);
+
+	    x.domain(domainByTrait[p.x]);
+	    y.domain(domainByTrait[p.y]);
+
+	    cell.append("rect")
+		.attr("class", "frame")
+		.attr("x", padding / 2)
+		.attr("y", padding / 2)
+		.attr("width", size - padding)
+		.attr("height", size - padding);
+
+	    cell.selectAll("circle")
+		.data(data)
+	      .enter().append("circle")
+		.attr("cx", function(d) { return x(d[p.x]); })
+		.attr("cy", function(d) { return y(d[p.y]); })
+		.attr("r", 4)
+		.style("fill", function(d) { return color(d.species); });
+	  }
+
+	  var brushCell;
+
+	  // Clear the previously-active brush, if any.
+	  function brushstart(p) {
+	    if (brushCell !== this) {
+	      d3.select(brushCell).call(brush.clear());
+	      x.domain(domainByTrait[p.x]);
+	      y.domain(domainByTrait[p.y]);
+	      brushCell = this;
+	    }
+	  }
+
+	  // Highlight the selected circles.
+	  function brushmove(p) {
+	    var e = brush.extent();
+	    svg.selectAll("circle").classed("hidden", function(d) {
+	      return e[0][0] > d[p.x] || d[p.x] > e[1][0]
+		  || e[0][1] > d[p.y] || d[p.y] > e[1][1];
+	    });
+	  }
+
+	  // If the brush is empty, select all circles.
+	  function brushend() {
+	    if (brush.empty()) svg.selectAll(".hidden").classed("hidden", false);
+	  }
+	});
+
+	function cross(a, b) {
+	  var c = [], n = a.length, m = b.length, i, j;
+	  for (i = -1; ++i < n;) for (j = -1; ++j < m;) c.push({x: a[i], i: i, y: b[j], j: j});
+	  return c;
+	}
+	
+        var scatterplot = d3.select('#heatmap').selectAll("input")
+        .data(["heatmap"]);
+
+	scatterplot.enter()
+        .append("input")
+        .attr("type", "button")
+        .attr("class", "button")
+	.attr("value", function(d){ return d;})
+        .on("click", function(d) {
+	  d3.select("svg").remove();
+	  var clickedButton = this;
+	  d3.selectAll("#heatmap").each(function() {
+        	var currButton = this;
+        	d3.select(this).transition().duration(900).style("visibility", function() {
+            	return (currButton === clickedButton) ? "visible" : "hidden";
+          });
+          });
+          d3.selectAll("#scatterplot").each(function() {
+        	var currButton = this;
+        	d3.select(this).transition().duration(900).style("visibility", function() {
+            	return "visible";
+          });
+	  
+          });
+	  d3.selectAll("#dataset-picker").each(function() {
+        	var currButton = this;
+        	d3.select(this).transition().duration(900).style("visibility", function() {
+            	return "visible";
+          });
+	  });
+          d3.json("../RealisticData/100x15.json", function(error, data) {
+    		updateVis(data, fields[0]);
+	});
+        });
+
+	}
+	
+	
+    
     </script>
   </body>
 </html>
