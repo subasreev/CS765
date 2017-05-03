@@ -175,7 +175,8 @@ function updateVis(data, field) {
 	var allFreq = [];
 	svg.selectAll(".row").each(function (d) { allFreq.push(d); });
 	var upperBound = d3.max(allFreq);
-	//console.log(upperBound);
+	var maxNumChar = (""+upperBound).length;
+	console.log(maxNumChar);
 
 	var colorScale = d3.scale.quantile()
               .domain([0, buckets - 1, upperBound])
@@ -205,21 +206,21 @@ function updateVis(data, field) {
 
 	var legend = svg.selectAll(".legend")
               .data([0].concat(colorScale.quantiles()), function(d) { return d; });
-
+	
           legend.enter().append("g")
               .attr("class", "legend");
 
           legend.append("rect")
-            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("x", function(d, i) { return (legendElementWidth + maxNumChar*4)*i })
             .attr("y", height)
-            .attr("width", legendElementWidth+10)
+            .attr("width", legendElementWidth + maxNumChar*4)
             .attr("height", legendElementWidth)
             .style("fill", function(d, i) { return colors[i]; });
 
           legend.append("text")
             .attr("class", "mono")
             .text(function(d) { return "≥ " + Math.round(d); })
-            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("x", function(d, i) { return (legendElementWidth + maxNumChar*4)*i })
             .attr("y", height+40);
 
           legend.exit().remove();
