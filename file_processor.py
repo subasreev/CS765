@@ -1,27 +1,20 @@
 # very simple example of reading a gradebook JSON
-# - reads in the JSON file and says how often each student was late
-#   and what their avergae score was (using the robust "drop the lowest 2"
-#   it puts its output to the console
+# - reads in the JSON file and writes an output file
+# that contains score, lateness, number of posts,
+# average length of posts, fixed category for each student
 #
 #  - can be run from the command line
-#       python exampleReader.py jsonfile.json
+#       python file_processor.py RealisticData/100x15.json
 #
 # sample code for CS765 Design Challenge 3
 #
 # this doesn't do a visualization (although, arguably it is a visualization)
 # but it does show how to read in a data file and produce an output
 # (in this case, text, not a picture)
-#
-# this is written using Python 3.6 - and as little extra stuff as possible
-#   OK, I added numpy for mean, but everyone has numpy :-)
-#
-# you may use this as part of your own solution, but remember to provide properr
-# attribution
-#
-# Mike Gleicher, April 2017
+# Reference: Prof. Michael Gleicher 
+# Author:    Subasree Venkatsubhramaniyen, May 2017
 
 import json
-import numpy
 import sys
 
 def gradebookSimple(filename):

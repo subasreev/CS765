@@ -102,54 +102,54 @@ function updateVis(data, field) {
 	    .attr('height', height + margins.top + margins.bottom)
 	    .append('g')
 		.attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
- var x = d3.scale.ordinal()
-    .rangeRoundBands([0, visWidth], 0.2);
+        var x = d3.scale.ordinal()
+            .rangeRoundBands([0, visWidth], 0.2);
 
 	// scale for determining name positions
-    var y = d3.scale.ordinal()
+        var y = d3.scale.ordinal()
 	    .rangeRoundBands([0, height], 0.5);
 
 	 
-    x.domain(d3.range(0, 80));
-    y.domain(data.assignments.map(function(d) { return d.name; })); 
-      var numBins = 5;
-      var gridSize = Math.floor(width / numBins);
-      var gridHeight = Math.floor(height / data.assignments.length);
-      var legendElementWidth = 30;
-      var buckets = 9,
-          colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
+        x.domain(d3.range(0, 80));
+        y.domain(data.assignments.map(function(d) { return d.name; })); 
+        var numBins = 5;
+        var gridSize = Math.floor(width / numBins);
+        var gridHeight = Math.floor(height / data.assignments.length);
+        var legendElementWidth = 30;
+        var buckets = 9,
+            colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]; // alternatively colorbrewer.YlGnBu[9]
       
-      // find the  maximum value of the field
-      var maxFieldVal = d3.max(data.students.map(function(d) { return d3.max(d.grades, function(v){
-	if(field == "grade_score") return v.score; 
-	else if(field == "num_posts") return v.posts.length; 
-	else if(field == "length_posts") {
-		var maxval = 0; 
-		for(var i=0;i<v.posts.length;i++){
-			//console.log(v.posts[i].images);
-			maxval = Math.max(maxval, v.posts[i].length);
-		}
-		return maxval;
-	}}); 
+        // find the  maximum value of the field
+        var maxFieldVal = d3.max(data.students.map(function(d) { return d3.max(d.grades, function(v){
+		if(field == "grade_score") return v.score; 
+		else if(field == "num_posts") return v.posts.length; 
+		else if(field == "length_posts") {
+			var maxval = 0; 
+			for(var i=0;i<v.posts.length;i++){
+				//console.log(v.posts[i].images);
+				maxval = Math.max(maxval, v.posts[i].length);
+			}
+			return maxval;
+		}}); 
 	}));
-      console.log("max " + field +" ="  + maxFieldVal);
-      var binSize = Math.floor(maxFieldVal/numBins);
-      console.log("binsize="+binSize); 	
+        console.log("max " + field +" ="  + maxFieldVal);
+        var binSize = Math.floor(maxFieldVal/numBins);
+        console.log("binsize="+binSize); 	
 
-      if(maxFieldVal/binSize >= numBins)
-	numBins += 1;
-      var possible_colvalues = new Array(numBins);
-      possible_colvalues.fill(0);
-      for(var i = 0; i<numBins; i++){
-	if(i == numBins - 1 && i*binSize != maxFieldVal)
-		possible_colvalues[i] = "<= "+maxFieldVal;
-	else
-	      	possible_colvalues[i] = "< "+((i+1)*binSize);
-      }
-      var dayLabels = svg.selectAll(".dayLabel")
+        if(maxFieldVal/binSize >= numBins)
+       		numBins += 1;
+        var possible_colvalues = new Array(numBins);
+        possible_colvalues.fill(0);
+        for(var i = 0; i<numBins; i++){
+		if(i == numBins - 1 && i*binSize != maxFieldVal)
+			possible_colvalues[i] = "<= "+maxFieldVal;
+		else
+		      	possible_colvalues[i] = "< "+((i+1)*binSize);
+        }
+      	var dayLabels = svg.selectAll(".dayLabel")
           .data(data.assignments);
 	  
-          dayLabels.enter()
+           dayLabels.enter()
             .append("g")
             .attr("class", "dayLabel")
 	    .attr('transform', function(d) { 
@@ -159,15 +159,15 @@ function updateVis(data, field) {
         .text(function(d) { return d.name; });
 	dayLabels.exit().remove();
 
-      var timeLabels = svg.selectAll(".timeLabel")
+        var timeLabels = svg.selectAll(".timeLabel")
           .data(possible_colvalues);
-          timeLabels.enter().append("g")
-            .attr("x", function(d, i) { return i * (gridSize-57) + 30; })
-            .attr("y", 0)
-            .attr("transform", "translate(" + gridSize / 2 + ", -6)")
-            .attr("class", "timeLabel");
+        timeLabels.enter().append("g")
+          .attr("x", function(d, i) { return i * (gridSize-57) + 30; })
+          .attr("y", 0)
+          .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+          .attr("class", "timeLabel");
 		
-          timeLabels.append('text')
+        timeLabels.append('text')
 	  .text(function(d) { return d; })
 	  .style("text-anchor", "right")
 	  .attr("x", function(d, i) { return i * (gridSize-57) - 20; })
