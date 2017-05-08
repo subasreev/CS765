@@ -77,17 +77,17 @@ circle.hidden {
 
      var fields = ["grade_score", "num_posts", "length_posts"];
 
-     d3.json("../RealisticData/100x15.json", function(error, data) {
+     d3.json("../RealisticData/765-2015-anon-gb.json", function(error, data) {
     		updateVis(data, fields[0]);
 	});
     
 
 function updateVis(data, field) {
-    var width = 600;
-	var height = 800;
+    	//var width = 600;
+	//var height = 800;
 
-	var txtWidth = 150;
-	var visWidth = width - txtWidth;
+	//var txtWidth = 150;
+	//var visWidth = width - txtWidth;
 	// so we don't accidentally write things off of the canvas, give us a little breathing room
 	var margins = {top: 20, right: 20, bottom: 40, left: 20};
 
@@ -98,7 +98,7 @@ function updateVis(data, field) {
 	var visWidth = width - txtWidth;
 
 	var svg = d3.select('#chart').append('svg')
-	    .attr('width', width + margins.left + margins.right)
+	    .attr('width', width + margins.left + margins.right + 400)
 	    .attr('height', height + margins.top + margins.bottom)
 	    .append('g')
 		.attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
@@ -110,7 +110,7 @@ function updateVis(data, field) {
 	    .rangeRoundBands([0, height], 0.5);
 
 	 
-        x.domain(d3.range(0, 80));
+        x.domain(d3.range(0, 200));
         y.domain(data.assignments.map(function(d) { return d.name; })); 
         var numBins = 5;
         var gridSize = Math.floor(width / numBins);
@@ -141,11 +141,14 @@ function updateVis(data, field) {
         var possible_colvalues = new Array(numBins);
         possible_colvalues.fill(0);
         for(var i = 0; i<numBins; i++){
-		if(i == numBins - 1 && i*binSize != maxFieldVal)
+		if(i == numBins - 1 && i*binSize < maxFieldVal){
+			//console.log(i*binSize +" "+ maxFieldVal);
 			possible_colvalues[i] = "<= "+maxFieldVal;
+		}
 		else
 		      	possible_colvalues[i] = "< "+((i+1)*binSize);
         }
+	//console.log(possible_colvalues);
       	var dayLabels = svg.selectAll(".dayLabel")
           .data(data.assignments);
 	  
@@ -159,10 +162,16 @@ function updateVis(data, field) {
         .text(function(d) { return d.name; });
 	dayLabels.exit().remove();
 
+        //find the max of assignment names
+        var allTextLen = [];
+        svg.selectAll(".dayLabel").each(function (d) { allTextLen.push(d.name.length);});
+	var dayLabelTextMaxLen = d3.max(allTextLen);
+	console.log("max char daylabel=", dayLabelTextMaxLen);
+
         var timeLabels = svg.selectAll(".timeLabel")
           .data(possible_colvalues);
         timeLabels.enter().append("g")
-          .attr("x", function(d, i) { return i * (gridSize-57) + 30; })
+          .attr("x", function(d, i) { return i * (gridSize-57) + 30 + x(Math.floor(dayLabelTextMaxLen*1.5)); })
           .attr("y", 0)
           .attr("transform", "translate(" + gridSize / 2 + ", -6)")
           .attr("class", "timeLabel");
@@ -170,7 +179,7 @@ function updateVis(data, field) {
         timeLabels.append('text')
 	  .text(function(d) { return d; })
 	  .style("text-anchor", "right")
-	  .attr("x", function(d, i) { return i * (gridSize-57) - 20; })
+	  .attr("x", function(d, i) { return i * (gridSize-57) - 20 + x(Math.floor(dayLabelTextMaxLen*1.5)); })
           .attr("y", 0)
           .attr("transform", "translate(" + gridSize / 2 + ", 0)");
 
@@ -234,7 +243,7 @@ function updateVis(data, field) {
 
 	      rows.append("rect")
 	      //.append("rect")
-              .attr("x", function(d, i) {return i * (gridSize - 57) - 180; })
+              .attr("x", function(d, i) {return i * (gridSize - 57) - 180 + x(Math.floor(dayLabelTextMaxLen*1.5)); })
               //.attr("y", function(d) { return y(this.parentNode.parentNode.__data__.name);})
 	      .attr("y", 0)
               .attr("rx", 4)
@@ -356,7 +365,7 @@ function displayScatterplotMatrix(){
 
 	var color = d3.scale.category10();
 
-	d3.csv("output.csv", function(error, data) {
+	d3.csv("scatterplot_file.csv", function(error, data) {
 	  if (error) throw error;
 
 	  var domainByTrait = {},
@@ -499,15 +508,12 @@ function displayScatterplotMatrix(){
             	return "visible";
           });
 	  });
-          d3.json("../RealisticData/100x15.json", function(error, data) {
+          d3.json("../RealisticData/765-2015-anon-gb.json", function(error, data) {
     		updateVis(data, fields[0]);
 	});
         });
 
 	}
-	
-	
-    
     </script>
   </body>
 </html>

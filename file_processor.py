@@ -20,7 +20,7 @@ import sys
 def gradebookSimple(filename):
     with open(filename,"rb") as fp:
         gb = json.load(fp)          # loads the json file
-	outputfile = "output.csv"
+	outputfile = "scatterplot_file.csv"
 	f = open(outputfile, 'w')
 	f.write("score,lateness,num_posts,avg_post_length,category\n")
 	#numassigns = len(gb["assignments"])
