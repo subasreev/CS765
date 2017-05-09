@@ -1,5 +1,5 @@
 # Design
-The design mainly focuses on identifying patterns in distribution of scores, number of posts and length of posts across all assignments. The field values are distributed into 6 fixed buckets and I chose to use heatmaps as they visually depict the frequency distribution in each bucket b the intensity of color. A continuous color ramp is used to fill the heatmap grids. 
+The design mainly focuses on identifying patterns in distribution of scores, number of posts and length of posts across all assignments. The field values are distributed into 6 fixed buckets and I chose to use heatmaps as they visually depict the frequency distribution in each bucket by the intensity of color. A continuous color ramp is used to fill the heatmap grids. 
 
 The second part of the design focuses on identifying correlations among lateness, average length of posts and number of posts for all student submissions in all assignments. Each row in the data file used to generate scatterplot matrix represents an assignment entry for a student with grade score, lateness value for this assignment, number of posts by this student for this assignment, average post length (mean length of all the posts by this student for this assignment), default static category (same for all students to color the data points similarly).
 
